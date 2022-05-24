@@ -1,0 +1,28 @@
+---
+title: "module-3-assignment"
+output: html_document
+date: '2022-05-23'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview
+
+1. Create Decision Tree and KNN classifiers on a data set without cross validation. 
+
+2. Then using cross-validation create classification decision tree and KNN models on same data set.  
+
+Compare results between first two cases:
+
+- Which classifier was more accurate?
+
+- Which strategy performed best? cross-validation or without cross-validation?
+
+- What statistic was used to compare performance
+
+
+## Data Set
+
+
