@@ -25,4 +25,67 @@ Compare results between first two cases:
 
 ## Data Set
 
+This is an Olympic Games dataset that describes medals and athletes for Tokyo 2020. The data was created from the [Tokyo Olympics](https://olympics.com/tokyo-2020/en/). More than 2,400 medals, and 11,000 athletes (with some personal data: date and place of birth, height, etc.) of the XXXII Olympic Games you can find here. Apart from it coaches and technical officials are present. The medals.csv file was downloaded from Kaggle at https://www.kaggle.com/datasets/piterfm/tokyo-2020-olympics?select=medals.csv. 
+
+**Author of Data Set:**
+
+Petro
+Kaggle Expert
+Lviv, Lviv Oblast, Ukraine
+Data Scientist, PhD
+
+## R Libraries
+
+```{r}
+library(tidyverse)
+library(skimr)
+library(janitor)
+```
+
+
+## Read CSV file
+
+```{r}
+medals_data <- read.csv('data/medals.csv')
+```
+
+```{r}
+str(medals_data)
+```
+
+## Data Cleaning
+
+```{r}
+skim_without_charts(medals_data)
+```
+
+```{r}
+medals_data_trimmed <- medals_data %>% 
+  select(medal_type, country_code, discipline_code, event)
+```
+
+```{r}
+head(medals_data_trimmed)
+```
+
+
+### Aggregate by event, country_code, discipline_code
+
+```{r}
+medals_summary <- medals_data_trimmed %>% 
+  group_by(country_code, discipline_code, event) %>% 
+  summarise(medal_label = max(medal_type))
+```
+
+```{r}
+head(medals_summary)
+```
+
+
+
+
+## References
+
+k-Nearest Neighbor: An Introductory Example.
+https://quantdev.ssri.psu.edu/sites/qdev/files/kNN_tutorial.html
 
