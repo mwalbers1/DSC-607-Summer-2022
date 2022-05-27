@@ -25,9 +25,9 @@ Compare results between first two cases:
 
 ## Data Set
 
-This is an Olympic Games dataset that describes medals and athletes for Tokyo 2020. The data was created from the [Tokyo Olympics](https://olympics.com/tokyo-2020/en/). More than 2,400 medals, and 11,000 athletes (with some personal data: date and place of birth, height, etc.) of the XXXII Olympic Games you can find here. Apart from it coaches and technical officials are present. 
+This is an Olympic Games dataset that describes medals and athletes for Tokyo 2020. The data was created from the [2020 Tokyo Olympics](https://olympics.com/tokyo-2020/en/). More than 2,400 medals, and 11,000 athletes (with some personal data: date and place of birth, height, etc.) of the XXXII Olympic Games you can find here. Apart from it coaches and technical officials are present. 
 
-The medals.csv file was downloaded from Kaggle at https://www.kaggle.com/datasets/piterfm/tokyo-2020-olympics?select=medals.csv. 
+The medals.csv file was downloaded from [Kaggle](https://www.kaggle.com/datasets/piterfm/tokyo-2020-olympics?select=medals.csv)
 
 **Author of Data Set:**
 
@@ -43,11 +43,13 @@ library(tidyverse)
 library(skimr)
 library(janitor)
 ```
-```{r}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 library(class)
 ```
 
-
+```{r lessR library, echo=FALSE, warning=FALSE, message=FALSE}
+library(lessR)
+```
 
 ## Read CSV file
 
@@ -67,97 +69,151 @@ skim_without_charts(medals_data)
 
 ```{r}
 medals_data_trimmed <- medals_data %>% 
-  select(medal_type, country_code, discipline_code, event)
+  select(medal_type, athlete_short_name, athlete_sex, country_code, country, discipline_code, event)
 ```
 
 ```{r}
 head(medals_data_trimmed)
 ```
 ```{r}
+glimpse(medals_data_trimmed)
+```
+
+
+### Display proportion of medal types
+
+
+```{r donut chart of medal types}
+PieChart(x = medal_type, data = medals_data_trimmed, values="%", main = "Olympic Medals")
+```
+
+## Check for Outliers
+
+```{r contigency table discipline_code}
+discipline_code_freq <- table(medals_data_trimmed$discipline_code) %>% as.data.frame %>% arrange(Freq)
+```
+
+
+```{r}
 distinct_discipline <- medals_data %>% 
   select(c(discipline_code, discipline)) %>% 
   unique()
 ```
 
-
-### Aggregate by event, country_code, discipline_code
-
 ```{r}
-medals_summary <- medals_data_trimmed %>% 
-  group_by(country_code, discipline_code, event) %>% 
-  summarise(medal_label = max(medal_type))
+discipline_freq <- merge(discipline_code_freq, distinct_discipline, by.x = 'Var1', by.y = 'discipline_code', all.x = TRUE) %>% 
+  arrange(Freq)
 ```
 
 ```{r}
-head(medals_summary)
+
 ```
+
+
+```{r}
+discipline_freq_new <- clean_names(discipline_freq)
+```
+
+
+
+```{r}
+discipline_freq_new <- discipline_freq_new %>% 
+  select(var1, freq, discipline) %>% 
+  rename(var1, discipline_code) %>% 
+  rename(freq, frequency)
+```
+
+
+```{r}
+discipline_freq_new
+```
+
+```{r histogram for discipline_freq_new}
+ggplot(data = discipline_freq_new) +
+  geom_histogram(mapping = aes(x=frequency), bins = 50, color="white", fill="purple") +
+  scale_x_continuous(breaks = seq(min(discipline_freq_new$frequency), max(discipline_freq_new$frequency), by = 15)) +
+  scale_y_continuous(breaks = seq(1, 15, by=2)) +
+  labs(title="Discipline Frequency",
+       x="Frequency",
+       y="Count")
+```
+
+
+There are nine disciplines in which six medals were won. Since this far exceeds the other disciplines, the disciplines with six medals won will be excluded from the analysis. 
+
+
+
+```{r}
+discipline_outliers <- discipline_freq_new %>% 
+  filter(frequency == 6)
+```
+
+
 
 ## Data Transformation
 
-- Preprocess data for the K-Nearest Neighbors model
+Preprocess data for the K-Nearest Neighbors and Decision Tree models
 
-- Preprocess data for the Decision Tree model
+### Select attributes for kNN model
+
+```{r}
+medals_knn <- medals_data_trimmed %>% 
+  select(medal_type, country_code, discipline_code, event)
+```
+
 
 ### Convert categorical columns into factors
 
 Convert the three categorical variables, country_code, discipline_code, and event into factors.  
 
+```{r}
+medals_knn$medal_type <- as.factor(medals_knn$medal_type)
+medals_knn$country_code <- as.factor(medals_knn$country_code)
+medals_knn$discipline_code <- as.factor(medals_knn$discipline_code)
+medals_knn$event <- as.factor(medals_knn$event)
+```
+
 
 ```{r}
-medals_summary$country_code <- as.factor(medals_summary$country_code)
-medals_summary$discipline_code <- as.factor(medals_summary$discipline_code)
-medals_summary$event <- as.factor(medals_summary$event)
+summary(medals_knn)
 ```
+
+
+### Standardize columns for kNN
+
+Standardize country_code, discipline_code, and event columns to have mean of zero and standard deviation of one
+
 
 ```{r}
-str(medals_summary)
-```
-
-```{r glimpse medals_summary}
-glimpse(medals_summary)
-```
-```{r}
-str(medals_summary)
-```
-
-
-### Check for Outliers
-
-```{r contigency table discipline_code}
-discipline_code_freq <- table(medals_summary$discipline_code) %>% as.data.frame %>% arrange(Freq)
-```
-
-```{r}
-merge(discipline_code_freq, distinct_discipline, by.x = 'Var1', by.y = 'discipline_code', all.x = TRUE) %>% 
-  arrange(Freq)
-```
-```{r}
-medals_summary %>% 
-  filter(discipline_code=='MTB')
-```
-The disciplines with lower frequencies have fewer medals won. The Cycling Mountain Bike discipline has two  events with four medals won.  The disciplines with frequencies below ten will be considered outliers.
-
-```{r}
-discipline_code_outliers <- discipline_code_freq %>% 
-  filter(Freq<10)
+medals_knn$country_code_int <- as.integer(medals_knn$country_code)
+medals_knn$discipline_code_int <- as.integer(medals_knn$discipline_code)
+medals_knn$event_int <- as.integer(medals_knn$event)
 ```
 
 ```{r}
-
+medals_knn$country_code_scaled <- scale(medals_knn$country_code_int)
+medals_knn$discipline_code_scaled <- scale(medals_knn$discipline_code_int)
+medals_knn$event_scaled <- scale(medals_knn$event_int)
 ```
 
+```{r}
+summary(medals_knn)
+```
+
+
+```{r}
+head(medals_knn, 12)
+```
 
 
 
 ```{r}
-ggplot(data = medals_summary) +
-  geom_bar(mapping = aes(x = discipline_code)) +
-  facet_wrap(~medal_label)
-  labs(title="Olympic events",
-       caption=paste0("Data from: 2020 Tokyo Olympics"),
-       x="Discipline",
-       y="Count")
+
 ```
+
+
+
+
 
 ```{r}
 
