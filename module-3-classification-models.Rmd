@@ -45,6 +45,8 @@ library(janitor)
 ```
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 library(class)
+library(caret)
+library(rpart)
 ```
 
 ```{r lessR library, echo=FALSE, warning=FALSE, message=FALSE}
@@ -75,7 +77,7 @@ medals_data_trimmed <- medals_data %>%
 ```{r}
 head(medals_data_trimmed)
 ```
-```{r}
+```{r glimpse medals data trimmed}
 glimpse(medals_data_trimmed)
 ```
 
@@ -86,13 +88,14 @@ glimpse(medals_data_trimmed)
 ```{r donut chart of medal types}
 PieChart(x = medal_type, data = medals_data_trimmed, values="%", main = "Olympic Medals")
 ```
+This donut chart shows an equal proportion of medal types for Gold, Silver and Bronze medals
+
 
 ## Check for Outliers
 
 ```{r contigency table discipline_code}
 discipline_code_freq <- table(medals_data_trimmed$discipline_code) %>% as.data.frame %>% arrange(Freq)
 ```
-
 
 ```{r}
 distinct_discipline <- medals_data %>% 
@@ -106,18 +109,11 @@ discipline_freq <- merge(discipline_code_freq, distinct_discipline, by.x = 'Var1
 ```
 
 ```{r}
-
+discipline_freq <- clean_names(discipline_freq)
 ```
 
-
 ```{r}
-discipline_freq_new <- clean_names(discipline_freq)
-```
-
-
-
-```{r}
-discipline_freq_new <- discipline_freq_new %>% 
+discipline_freq_new <- discipline_freq %>% 
   select(var1, freq, discipline) %>% 
   rename(var1, discipline_code) %>% 
   rename(freq, frequency)
@@ -142,10 +138,40 @@ ggplot(data = discipline_freq_new) +
 There are nine disciplines in which six medals were won. Since this far exceeds the other disciplines, the disciplines with six medals won will be excluded from the analysis. 
 
 
-
 ```{r}
 discipline_outliers <- discipline_freq_new %>% 
-  filter(frequency == 6)
+  filter(frequency == 6) %>% 
+  select(discipline_code)
+```
+
+```{r}
+medals_data_trimmed %>% 
+  filter(discipline_code %in% discipline_outliers$discipline_code)
+```
+### Create kNN data frame
+
+- Remove outliers  
+
+- Select attributes for kNN model
+
+
+```{r}
+medals_knn <- medals_data_trimmed %>% 
+  filter(!(discipline_code %in% discipline_outliers$discipline_code)) %>% 
+  select(medal_type, country_code, discipline_code, event)
+```
+
+```{r}
+str(medals_knn)
+```
+
+
+### Create Decision Tree data frame
+
+```{r}
+medals_decision_tree <- medals_data_trimmed %>% 
+  filter(!(discipline_code %in% discipline_outliers$discipline_code)) %>% 
+  select(medal_type, country_code, discipline_code, event)
 ```
 
 
@@ -154,15 +180,8 @@ discipline_outliers <- discipline_freq_new %>%
 
 Preprocess data for the K-Nearest Neighbors and Decision Tree models
 
-### Select attributes for kNN model
 
-```{r}
-medals_knn <- medals_data_trimmed %>% 
-  select(medal_type, country_code, discipline_code, event)
-```
-
-
-### Convert categorical columns into factors
+### kNN data preparation
 
 Convert the three categorical variables, country_code, discipline_code, and event into factors.  
 
@@ -179,7 +198,7 @@ summary(medals_knn)
 ```
 
 
-### Standardize columns for kNN
+#### Standardize columns for kNN
 
 Standardize country_code, discipline_code, and event columns to have mean of zero and standard deviation of one
 
@@ -196,28 +215,90 @@ medals_knn$discipline_code_scaled <- scale(medals_knn$discipline_code_int)
 medals_knn$event_scaled <- scale(medals_knn$event_int)
 ```
 
-```{r}
+```{r summary medals_knn after scaling}
 summary(medals_knn)
 ```
 
+## k-Nearest Neighbors Model
+
+- Create training and test sets from medals_knn data frame where 80% of the data will be for training. The remaining 20% of the data will be for the test set
+
+- Create k-Nearest Neighbors model for classification of medal types (Gold, Silver, and Bronze)
 
 ```{r}
-head(medals_knn, 12)
+shuffle_data <- function(medals.df) {
+  # Set seed
+  set.seed(42)
+
+  # Shuffle row indices: rows
+  rows <- sample(nrow(medals.df))
+
+  # Randomly order data
+  medals.df[rows,]
+}
+```
+
+```{r}
+shuffled_medals_knn <- shuffle_data(medals_knn)
+```
+
+```{r}
+split <- round(nrow(shuffled_medals_knn)*0.80)
+```
+
+```{r}
+medals_knn_train <- shuffled_medals_knn[1:split,]
+medals_knn_test <- shuffled_medals_knn[(split+1):nrow(shuffled_medals_knn),]
+```
+
+```{r}
+#medal_types <- medals_knn_train$medal_type
+```
+
+
+```{r}
+#p <- knn(train = medals_knn_train[-1], test = medals_knn_test[-1], cl = medal_types, k=3)
+```
+
+```{r}
+# Create a confusion matrix of the predicted versus actual values
+#actual_medals <- medals_knn_test$medal_type
+#table(actual_medals, p)
+
+```
+
+```{r}
+# Compute the accuracy
+#mean(p == actual_medals)
+```
+
+
+```{r}
+
+
 ```
 
 
 
+
+## Decision Tree Model
+
+Create Decision Tree model for a binary classification of Gold medals won
+
+```{r}
+
+```
+
+```{r}
+
+```
+
 ```{r}
 
 ```
 
 
 
-
-
-```{r}
-
-```
 
 
 
