@@ -174,6 +174,9 @@ medals_decision_tree <- medals_data_trimmed %>%
   select(medal_type, country_code, discipline_code, event)
 ```
 
+```{r}
+str(medals_decision_tree)
+```
 
 
 ## Data Transformation
@@ -219,11 +222,21 @@ medals_knn$event_scaled <- scale(medals_knn$event_int)
 summary(medals_knn)
 ```
 
+### Create binary columns for medal type column for Decision Tree data frame
+
+```{r}
+medals_decision_tree$gold <- ifelse(medal_type == "Gold Medal", 1, 0)
+medals_decision_tree$silver <- ifelse(medal_type == "Silver Medal", 1, 0)
+medals_decision_tree <- ifelse(medal_type == "Bronze Medal", 1, 0)
+```
+
+
 ## k-Nearest Neighbors Model
 
 - Create training and test sets from medals_knn data frame where 80% of the data will be for training. The remaining 20% of the data will be for the test set
 
 - Create k-Nearest Neighbors model for classification of medal types (Gold, Silver, and Bronze)
+
 
 ```{r}
 shuffle_data <- function(medals.df) {
@@ -252,54 +265,110 @@ medals_knn_test <- shuffled_medals_knn[(split+1):nrow(shuffled_medals_knn),]
 ```
 
 ```{r}
-#medal_types <- medals_knn_train$medal_type
-```
-
-
-```{r}
-#p <- knn(train = medals_knn_train[-1], test = medals_knn_test[-1], cl = medal_types, k=3)
+medal_types.train <- medals_knn_train$medal_type
 ```
 
 ```{r}
-# Create a confusion matrix of the predicted versus actual values
-#actual_medals <- medals_knn_test$medal_type
-#table(actual_medals, p)
-
+p <- knn(train = medals_knn_train[-1], test = medals_knn_test[-1], cl = medal_types.train, k=3)
 ```
+
+### Confusion matrix for kNN model
 
 ```{r}
-# Compute the accuracy
-#mean(p == actual_medals)
+table(medals_knn_test$medal_type, p)
 ```
 
+### Compute accuracy of kNN model
 
 ```{r}
-
-
+mean(p == actual_medals.test)
 ```
 
+### Calculate misclassification rate of kNN model
 
+```{r}
+num.incorrect <- sum(p != actual_medals.test)
+num.correct <- sum(actual_medals.test)
+misclassification.rate <- num.incorrect / num.correct
+```
 
 
 ## Decision Tree Model
 
-Create Decision Tree model for a binary classification of Gold medals won
+- Create training and test data sets in which 80% of the data will be for training.  The remainig 20% will be for the test set.
+
+- Create Decision Tree model for a binary classification of Gold medals won
+
 
 ```{r}
-
-```
-
-```{r}
-
-```
-
-```{r}
-
+shuffled_medals_dtree <- shuffle_data(medals_decision_tree)
 ```
 
 
+```{r}
+medals_dtree_train <- shuffled_medals_dtree[1:split,]
+medals_dtree_test <- shuffled_medals_dtree[(split+1):nrow(shuffled_medals_dtree),]
+```
 
 
+```{r}
+gold_model <- rpart(gold ~ country_code + discipline_code + event, data = medals_dtree_train, method = "class", control = rpart.control(cp = 0))
+```
+
+```{r Prediction on the test data set}
+medals_dtree_test$pred <- predict(gold_model, medals_dtree_test, type = "class")
+```
+
+### Confusion matrix for Decision Tree model
+
+```{r}
+table(medals_dtree_test$gold, medals_dtree_test$pred)
+```
+
+### Calculate accuracy score for Decision Tree model
+
+```{r}
+mean(medals_dtree_test$gold == medals_dtree_test$pred)
+```
+
+### Calculate misclassification rate for Decision Tree model
+
+```{r}
+num.incorrect.dtree <- sum(medals_dtree_test$gold != medals_dtree_test$pred)
+num.correct.dtree <- sum(medals_dtree_test$gold)
+misclassification.rate.dtree <- num.incorrect.dtree / num.correct.dtree
+```
+
+
+## Cross-Validation
+
+### kNN Cross-Validation
+
+
+```{r}
+cv_knn_model <- train(medal_type ~ ., data = medals_knn_train, 
+                      method = "knn",
+                      trControl = trainControl(method = "cv", number = 5, verboseIter = TRUE))
+```
+
+```{r}
+cv_knn_model
+```
+
+
+### Decision tree Cross-Validation
+
+
+```{r}
+cv_dtree_model <- train(gold ~ country_code + discipline_code + event, 
+                        data = medals_dtree_train, 
+                        method = "rpart",
+                        trControl = trainControl(method = "cv", number = 5, verboseIter = TRUE))
+```
+
+```{r}
+cv_dtree_model
+```
 
 
 
