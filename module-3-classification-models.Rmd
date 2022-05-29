@@ -1,7 +1,9 @@
 ---
-title: "module-3-assignment"
+title: "DSC 607 Data Mining: Classification using kNN and Decision Trees"
+
+date: "`r Sys.Date()`"
+
 output: html_document
-date: '2022-05-23'
 ---
 
 ```{r setup, include=FALSE}
@@ -222,12 +224,21 @@ medals_knn$event_scaled <- scale(medals_knn$event_int)
 summary(medals_knn)
 ```
 
+```{r}
+colnames(medals_knn)
+```
+
+
 ### Create binary columns for medal type column for Decision Tree data frame
 
 ```{r}
-medals_decision_tree$gold <- ifelse(medal_type == "Gold Medal", 1, 0)
-medals_decision_tree$silver <- ifelse(medal_type == "Silver Medal", 1, 0)
-medals_decision_tree <- ifelse(medal_type == "Bronze Medal", 1, 0)
+medals_decision_tree$gold <- ifelse(medals_decision_tree$medal_type == "Gold Medal", 1, 0)
+medals_decision_tree$silver <- ifelse(medals_decision_tree$medal_type == "Silver Medal", 1, 0)
+medals_decision_tree$bronze <- ifelse(medals_decision_tree$medal_type == "Bronze Medal", 1, 0)
+```
+
+```{r}
+summary(medals_decision_tree)
 ```
 
 
@@ -259,10 +270,17 @@ shuffled_medals_knn <- shuffle_data(medals_knn)
 split <- round(nrow(shuffled_medals_knn)*0.80)
 ```
 
+country_code_scaled    "discipline_code_scaled"
+[10] "event_scaled"          
+
 ```{r}
-medals_knn_train <- shuffled_medals_knn[1:split,]
-medals_knn_test <- shuffled_medals_knn[(split+1):nrow(shuffled_medals_knn),]
+medals_knn_train <- shuffled_medals_knn[1:split, c("medal_type", "country_code_scaled", "discipline_code_scaled", "event_scaled")]
 ```
+
+```{r}
+medals_knn_test <- shuffled_medals_knn[(split+1):nrow(shuffled_medals_knn),c("medal_type", "country_code_scaled", "discipline_code_scaled", "event_scaled")]
+```
+
 
 ```{r}
 medal_types.train <- medals_knn_train$medal_type
@@ -278,18 +296,27 @@ p <- knn(train = medals_knn_train[-1], test = medals_knn_test[-1], cl = medal_ty
 table(medals_knn_test$medal_type, p)
 ```
 
+
 ### Compute accuracy of kNN model
 
 ```{r}
-mean(p == actual_medals.test)
+mean(p == medals_knn_test$medal_type)
 ```
+
 
 ### Calculate misclassification rate of kNN model
 
 ```{r}
-num.incorrect <- sum(p != actual_medals.test)
-num.correct <- sum(actual_medals.test)
+num.incorrect <- sum(p != medals_knn_test$medal_type)
+num.correct <- sum(p == medals_knn_test$medal_type)
+```
+
+```{r}
 misclassification.rate <- num.incorrect / num.correct
+```
+
+```{r}
+misclassification.rate
 ```
 
 
@@ -304,6 +331,9 @@ misclassification.rate <- num.incorrect / num.correct
 shuffled_medals_dtree <- shuffle_data(medals_decision_tree)
 ```
 
+```{r}
+split.dtree <- round(nrow(shuffled_medals_dtree)*0.80)
+```
 
 ```{r}
 medals_dtree_train <- shuffled_medals_dtree[1:split,]
