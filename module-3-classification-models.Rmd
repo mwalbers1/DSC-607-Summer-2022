@@ -238,6 +238,13 @@ medals_decision_tree$bronze <- ifelse(medals_decision_tree$medal_type == "Bronze
 ```
 
 ```{r}
+medals_decision_tree$gold <- as.factor(medals_decision_tree$gold)
+medals_decision_tree$silver <- as.factor(medals_decision_tree$silver)
+medals_decision_tree$bronze <- as.factor(medals_decision_tree$bronze)
+```
+
+
+```{r}
 summary(medals_decision_tree)
 ```
 
@@ -281,19 +288,18 @@ medals_knn_train <- shuffled_medals_knn[1:split, c("medal_type", "country_code_s
 medals_knn_test <- shuffled_medals_knn[(split+1):nrow(shuffled_medals_knn),c("medal_type", "country_code_scaled", "discipline_code_scaled", "event_scaled")]
 ```
 
-
 ```{r}
 medal_types.train <- medals_knn_train$medal_type
 ```
 
 ```{r}
-p <- knn(train = medals_knn_train[-1], test = medals_knn_test[-1], cl = medal_types.train, k=3)
+p <- knn(train = medals_knn_train[-1], test = medals_knn_test[-1], cl = medal_types.train, k = 3)
 ```
 
 ### Confusion matrix for kNN model
 
 ```{r}
-table(medals_knn_test$medal_type, p)
+table(medals_knn_test$medal_type, p, dnn=c("Actual","Predicted"))
 ```
 
 
@@ -336,38 +342,124 @@ split.dtree <- round(nrow(shuffled_medals_dtree)*0.80)
 ```
 
 ```{r}
-medals_dtree_train <- shuffled_medals_dtree[1:split,]
-medals_dtree_test <- shuffled_medals_dtree[(split+1):nrow(shuffled_medals_dtree),]
+medals_dtree_train <- shuffled_medals_dtree[1:split.dtree, 
+                                            c("gold", "medal_type", "country_code", "discipline_code", "event")]
 ```
+
+```{r}
+medals_dtree_test <- shuffled_medals_dtree[(split.dtree+1):nrow(shuffled_medals_dtree), 
+                                           c("gold", "medal_type", "country_code", "discipline_code", "event")]
+```
+
+### Remove country codes in test set that do not exist in the training set
 
 
 ```{r}
-gold_model <- rpart(gold ~ country_code + discipline_code + event, data = medals_dtree_train, method = "class", control = rpart.control(cp = 0))
+distinct_country_code.train <- unique(medals_dtree_train$country_code)
+distinct_country_code.test <- unique(medals_dtree_test$country_code)
 ```
+
+```{r}
+country_code.notin_train <- setdiff(distinct_country_code.test, distinct_country_code.train)
+```
+
+```{r}
+country_code.notin_train
+```
+
+```{r}
+medals_dtree_test <- medals_dtree_test %>% 
+  filter(!(country_code %in% country_code.notin_train)) %>% 
+  filter(!(event %in% "Men's Triple Jump"))
+```
+
+```{r}
+gold_model <- rpart(gold ~ country_code + discipline_code + event, 
+                    data = medals_dtree_train, method = "class", control = rpart.control(cp = 0))
+```
+
+```{r summary of gold_model}
+str(gold_model)
+```
+```{r}
+plot(gold_model)
+```
+
+This appears to be deep decision tree with the maxdepth value of 30.  The number of splits is 205 since there are many combinations of countries, disciplines, and events in the trainig set.  
+
+
+### Perform In-sample prediction for Decision Tree
+
+
+```{r Prediction on the test data set}
+medals_dtree_train$pred <- predict(gold_model, type = "class")
+```
+
+### In-sample Confusion matrix for Decision Tree model
+
+```{r}
+table(medals_dtree_train$gold, medals_dtree_train$pred, dnn=c("Actual","Predicted"))
+```
+
+### In-Sample Accuracy score for Decision Tree model
+
+```{r}
+mean(medals_dtree_train$gold == medals_dtree_train$pred)
+```
+
+### In-Sample misclassification rate for Decision Tree model
+
+```{r}
+num.incorrect.dtree.insample <- sum(medals_dtree_train$gold != medals_dtree_train$pred)
+num.correct.dtree.insample <- sum(medals_dtree_train$gold == medals_dtree_train$pred)
+```
+
+```{r}
+misclassification.rate.dtree.insample <- num.incorrect.dtree.insample / num.correct.dtree.insample
+```
+
+```{r}
+misclassification.rate.dtree.insample
+```
+
+The accuracy is very high at 95% and the misclassification rate is below 5%. The decision tree is also deep in that it has a maximum depth of 30 levels. Both factors may indicate overfitting. The decision tree will be applied to an out-of-sample test set to determine if the model can generalize to unseen data.
+
+
+### Perform Out-Of-Sample prediction for Decision Tree
+
 
 ```{r Prediction on the test data set}
 medals_dtree_test$pred <- predict(gold_model, medals_dtree_test, type = "class")
 ```
 
-### Confusion matrix for Decision Tree model
+### Out-Of-Sample Confusion matrix for Decision Tree model
 
 ```{r}
-table(medals_dtree_test$gold, medals_dtree_test$pred)
+table(medals_dtree_test$gold, medals_dtree_test$pred, dnn=c("Actual","Predicted"))
 ```
 
-### Calculate accuracy score for Decision Tree model
+### Out-Of-Sample Accuracy score for Decision Tree model
 
 ```{r}
 mean(medals_dtree_test$gold == medals_dtree_test$pred)
 ```
 
-### Calculate misclassification rate for Decision Tree model
+### Out-Of-Sample misclassification rate for Decision Tree model
 
 ```{r}
-num.incorrect.dtree <- sum(medals_dtree_test$gold != medals_dtree_test$pred)
-num.correct.dtree <- sum(medals_dtree_test$gold)
-misclassification.rate.dtree <- num.incorrect.dtree / num.correct.dtree
+num.incorrect.dtree.outsample <- sum(medals_dtree_test$gold != medals_dtree_test$pred)
+num.correct.dtree.outsample <- sum(medals_dtree_test$gold == medals_dtree_test$pred)
 ```
+
+```{r}
+misclassification.rate.dtree.outsample <- num.incorrect.dtree.outsample / num.correct.dtree.outsample
+```
+
+```{r}
+misclassification.rate.dtree.outsample
+```
+
+There appears to be overfitting of the training data for the decision tree model.  The accuracy for the test set was 79% which is a significant drop from the In-sample 95% accuracy score.
 
 
 ## Cross-Validation
@@ -378,6 +470,7 @@ misclassification.rate.dtree <- num.incorrect.dtree / num.correct.dtree
 ```{r}
 cv_knn_model <- train(medal_type ~ ., data = medals_knn_train, 
                       method = "knn",
+                      tuneGrid=data.frame(k=3),
                       trControl = trainControl(method = "cv", number = 5, verboseIter = TRUE))
 ```
 
@@ -387,6 +480,10 @@ cv_knn_model
 
 
 ### Decision tree Cross-Validation
+
+```{r}
+str(medals_dtree_test)
+```
 
 
 ```{r}
@@ -402,8 +499,19 @@ cv_dtree_model
 
 
 
+
+
+## Suggested Next Steps
+
+
+
 ## References
 
 k-Nearest Neighbor: An Introductory Example.
 https://quantdev.ssri.psu.edu/sites/qdev/files/kNN_tutorial.html
+
+
+Classification and Regression Tree (CART).
+https://homepages.uc.edu/~lis6/Teaching/ML19Spring/Lab/lab8_tree.html#classification-tree-credit-card-default-data
+
 
