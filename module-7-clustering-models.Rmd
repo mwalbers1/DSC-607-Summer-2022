@@ -1,0 +1,36 @@
+---
+title: "DSC-607 Data Mining: Clustering Models"
+author: "Michael Albers"
+date: '2022-06-19'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview
+
+- Discuss the theoretical background of cluster analyses (in general) in your program comments.
+
+- Perform cluster analysis of your data using two different methods and interpret and discuss the results.
+
+- How do the results of the two methods differ? Why?
+
+- What statistic did you use to compare the performance of your two clustering algorithms?
+
+
+
+## Data Set
+
+
+
+## Clustering Background
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(skimr)
+library(janitor)
+```
+
