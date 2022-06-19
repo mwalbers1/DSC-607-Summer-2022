@@ -1,0 +1,13 @@
+﻿Column_Name,Description
+Unique_ID,Unique record identifier
+Indicator_ID,Identifier of the type of measured value across time and space
+Name,Name of the indicator
+Measure,How the indicator is measured
+Measure_Info,Information (such as units) about the measure
+Geo_Type_Name,"Geography type; UHF' stands for United Hospital Fund neighborhoods; For instance, Citywide, Borough, and Community Districts are different geography types"
+Geo_Join_ID,"Identifier of the neighborhood geographic area, used for joining to mapping geography files to make thematic maps"
+Geo_Place_Name,Neighborhood name
+Time_Period,"Description of the time that the data applies to ; Could be a year, range of years, or season for example"
+Start_Date,Start date/time of period
+Data_Value,"The actual data value for this indicator, measure, place, and time"
+Message,Notes that apply to data value
