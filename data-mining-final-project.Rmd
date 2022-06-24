@@ -1,0 +1,86 @@
+---
+title: 'DSC-607 Data Mining: Final Project'
+author: "Michael Albers"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse, warn.conflicts = FALSE)
+```
+
+
+
+## Project Overview
+
+Perform Market Basket Analysis on US Census data to extract patterns and associations from demographic data for New York state.
+
+
+
+## Research Question
+
+Identify specific patterns and segments of the New York state population for post COVID-19 risk factors such as job loss, stress, anxiety, and depression.
+
+
+
+## Data Set
+
+The American Community Survey known as ACS is a part of the US Census Bureau which conducts annual surveys of three million people throughout the United States. The data set consists of the ACS 2019 one-year estimates for social and economic characteristics, and the 2020 5-year estimates for demographic and housing data for New York state.  The ACS estimates are within the 90% confidence interval.
+
+
+
+### ACS Data Files
+
+- DP02 Social Characteristics
+
+- DP03 Economic Characteristics
+
+- DP05 Demographic and Housing Characteristics
+
+
+
+## Data Preprocessing
+
+
+### Alteryx Process
+
+![Alteryx Workflow](resources/alteryx-acs-workflow.png)
+
+
+
+An ETL (Extract, Transform, Load) workflow was created using Alteryx Designer. The workflow performs the following tasks for each of the three ACS files:
+
+1 - Download CSV file
+
+2 - Filter records to exclude grand totals
+
+3 - Clean numeric cells by removing spaces, punctuation, and characters
+
+4 - Rename columns
+
+
+After each CSV file is cleaned, then they are merged into a single CSV file which is used for creating the market basket CSV file. The data values are then scaled to be in thousands (1,000s).
+
+
+
+## Exploratory Data Analysis
+
+Check for outliers and skewness in the data set which could impact the Market Basket Analysis
+
+
+```{r}
+
+```
+
+
+
+## Market Basket Analysis
+
+
+### Create Market Basket Transactions
+
+
+
