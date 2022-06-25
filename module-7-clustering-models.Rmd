@@ -32,6 +32,9 @@ Air pollution is one of the most important environmental threats to urban popula
 
 ## Clustering Background
 
+Partitional clustering divides data points into a finite number of non-overlapping partitions.  Hierarchical clustering places data points into a set of nested clusters, that are organized into a hierarchical tree.  Exclusive clustering is when the points belong to only one cluster.  In non-exclusive clustering, points can belong to multiple clusters.  Fuzzy clustering means that every point belongs to every cluster with some weight between zero and one.
+
+
 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
@@ -39,6 +42,10 @@ library(tidyverse)
 library(skimr)
 library(janitor)
 ```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(data.table)
+```
+
 
 ```{r}
 aq <- read.csv('data/Air_Quality.csv')
@@ -57,6 +64,167 @@ colnames(aq_clean)
 ```
 
 ```{r}
+summary(aq_clean)
+```
+
+```{r}
+categ_cols <- aq_clean %>%
+  tabyl(name, measure) %>%
+  adorn_totals("col")
+```
+
+```{r}
+category_df <- as.data.frame(categ_cols)
+```
+
+```{r}
+category_df
+```
+
+
+
+```{r}
+measure_col_stats <- aq_clean %>%
+  tabyl(measure) %>%
+  adorn_totals("col")
+```
+
+```{r}
+measure_col_stats_df <- as.data.frame(measure_col_stats)
+```
+
+```{r}
+measure_col_stats_df
+```
+
+## K-Means Clustering 
+
+A K-Means clustering model will be created on the following five features:
+
+1. Air Toxics Concentrations- Average Benzene Concentrations		
+2. Air Toxics Concentrations- Average Formaldehyde Concentrations		
+3. Boiler Emissions- Total NOx Emissions		
+4. Boiler Emissions- Total PM2.5 Emissions		
+5. Boiler Emissions- Total SO2 Emissions
+
+
+
+### Data Preparation for K-Means model
+
+Create a wide data frame with each feature as its own column
+
+```{r}
+air_quality_names <- c('Air Toxics Concentrations- Average Benzene Concentrations', 
+                       'Air Toxics Concentrations- Average Formaldehyde Concentrations',
+                       'Boiler Emissions- Total NOx Emissions',
+                       'Boiler Emissions- Total PM2.5 Emissions',
+                       'Boiler Emissions- Total SO2 Emissions')
 
 ```
+
+```{r}
+air_quality.filtered <- aq_clean %>% 
+  filter(name %in% air_quality_names) %>% 
+  subset(select = c(indicator_id, name, data_value))
+```
+
+
+```{r}
+atc_avg_benzene_values <- air_quality.filtered %>% 
+    filter(indicator_id == 646) %>% 
+    select(atc_avg_benzene=data_value)
+
+```
+
+```{r}
+atc_avg_formaldehyde_values <- air_quality.filtered %>% 
+    filter(indicator_id == 647) %>% 
+    select(atc_avg_formaldehyde=data_value)
+```
+
+```{r}
+boiler_nox_values <- air_quality.filtered %>% 
+    filter(indicator_id == 642) %>% 
+    select(boiler_nox=data_value)
+```
+
+```{r}
+boiler_pm2.5_values <- air_quality.filtered %>% 
+    filter(indicator_id == 641) %>% 
+    select(boiler_pm2.5=data_value)
+```
+
+```{r}
+boiler_so2_values <- air_quality.filtered %>% 
+    filter(indicator_id == 640) %>% 
+    select(boiler_so2=data_value)
+```
+
+```{r}
+df.t1 <- data.frame(atc_avg_benzene = atc_avg_benzene_values,
+                    atc_avg_formaldehyde = atc_avg_formaldehyde_values)
+
+df.t2 <- data.frame(boiler_nox = boiler_nox_values,
+                    boiler_pm2.5 = boiler_pm2.5_values,
+                    boiler_so2 = boiler_so2_values)
+
+                    
+```
+
+```{r}
+air_quality_wide.df <- cbind(df.t1[1:96,], df.t2)
+```
+
+### Scale data
+
+The five features in the air_quality_wide.df data frame are on different scales.  The data frame will be scaled to prevent any column(s) from having too much influence on the K-Means algorithm.
+
+
+```{r}
+air_quality_scaled <- scale(air_quality_wide.df)
+```
+
+```{r}
+class(air_quality_scaled)
+```
+
+## Implement K-Means Algorithm
+
+### Elbow Method to find optimal number of clusters
+
+```{r}
+set.seed(6)
+wcss <- vector()
+
+for (i in 1:10) {
+  wcss[i] <- sum(kmeans(air_quality_scaled, i)$withinss)
+}
+
+```
+
+```{r}
+plot(1:10,
+   wcss,
+   type = 'b',
+   main = paste('The Elbow Method'),
+   xlab = 'Number of clusters',
+   ylab = 'WCSS')
+```
+
+The optimal number of clusters appears to be five from the scree plot
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+
+
+
+
+
 
