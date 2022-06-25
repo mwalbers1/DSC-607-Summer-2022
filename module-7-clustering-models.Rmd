@@ -1,7 +1,7 @@
 ---
 title: "DSC-607 Data Mining: Clustering Models"
 author: "Michael Albers"
-date: '2022-06-19'
+date: '2022-06-25'
 output: html_document
 ---
 
@@ -9,11 +9,12 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 ## Overview
 
-- Discuss the theoretical background of cluster analyses (in general) in your program comments.
+- Discuss the theoretical background of cluster analyses (in general)
 
-- Perform cluster analysis of your data using two different methods and interpret and discuss the results.
+- Perform cluster analysis using two different methods and interpret and discuss the results.
 
 - How do the results of the two methods differ? Why?
 
@@ -42,8 +43,10 @@ library(tidyverse)
 library(skimr)
 library(janitor)
 ```
+
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 library(cluster)
+library(dbscan)
 ```
 
 
@@ -97,9 +100,9 @@ measure_col_stats_df <- as.data.frame(measure_col_stats)
 measure_col_stats_df
 ```
 
-## K-Means Clustering 
+## Feature Selection
 
-A K-Means clustering model will be created on the following five features:
+The clustering analysis will be performed on the following five features:
 
 1. Air Toxics Concentrations- Average Benzene Concentrations		
 2. Air Toxics Concentrations- Average Formaldehyde Concentrations		
@@ -108,6 +111,7 @@ A K-Means clustering model will be created on the following five features:
 5. Boiler Emissions- Total SO2 Emissions
 
 
+## K-Means Clustering
 
 ### Data Preparation for K-Means model
 
@@ -127,7 +131,6 @@ air_quality.filtered <- aq_clean %>%
   filter(name %in% air_quality_names) %>% 
   subset(select = c(indicator_id, name, data_value))
 ```
-
 
 ```{r}
 atc_avg_benzene_values <- air_quality.filtered %>% 
@@ -177,7 +180,7 @@ air_quality_wide.df <- cbind(df.t1[1:96,], df.t2)
 
 ### Scale data
 
-The five features in the air_quality_wide.df data frame are on different scales.  The data frame will be scaled to prevent any column(s) from having too much influence on the K-Means algorithm.
+The five features in the air_quality_wide.df data frame are in different scales.  The data frame will be scaled to prevent any column(s) from having too much influence on the K-Means algorithm.
 
 
 ```{r}
@@ -219,9 +222,9 @@ kmeans.aq <- kmeans(x = air_quality_scaled, centers = 5)
 y_kmeans = kmeans.aq$cluster
 ```
 
-### Visualize clusters
+### Visualize K-Means clusters
 
-Visualization of clusters with the "Air Toxics Concentrations - Average Benzene Concentrations" and "Air Toxics Concentrations - Average Formaldehyde Concentrations" features
+
 
 ```{r}
 clusplot(air_quality_wide.df[1:2],
@@ -237,7 +240,8 @@ clusplot(air_quality_wide.df[1:2],
          ylab = 'Average Formaldehyde')
 ```
 
-Visualization of clusters with the "Boiler Emissions- Total NOx Emissions" and "Boiler Emissions- Total PM2.5 Emissions" features
+Visualization of clusters with the "Air Toxics Concentrations - Average Benzene Concentrations" and "Air Toxics Concentrations - Average Formaldehyde Concentrations" features
+
 
 
 ```{r}
@@ -253,6 +257,9 @@ clusplot(air_quality_wide.df[3:4],
          xlab = 'Boiler Emissions - Total Nox',
          ylab = 'Boiler Emissions - Total PM2.5')
 ```
+
+Visualization of clusters with the "Boiler Emissions- Total NOx Emissions" and "Boiler Emissions- Total PM2.5 Emissions" features
+
 
 ### Calculate proportion of WSS to the Total Sum of Squares
 
@@ -270,21 +277,128 @@ Both cluster plots are showing outliers and the clusters are overlapping one ano
 
 ## DBSCAN Clustering Algorithm
 
-Because there was high density points in the K-Means algorithm, a density-clustering model will be created
+Because there are high density points in the data set, a density-based clustering model will be created
+
+
+### Plot k-Nearest Neighbor Distance
+
+Use this plot to find a suitable value for the eps parameter for DBSCAN clustering model
+
+```{r}
+kNNdistplot(air_quality_scaled, k=4)
+```
+
+The kNN distance plot increases at 0.25
 
 
 ```{r}
+dbscan.hyperparams <- data.frame(eps = c(0.25, 0.3), minPts = c(2, 4))
+row.names(dbscan.hyperparams) <- c('Iteration-1', 'Iteration-2')
+```
 
+
+
+## Implement DBSCAN Clustering
+
+### Hyperparameters
+
+Run two iterations of DBSCAN with the following hyperparameters:
+
+```{r}
+print(dbscan.hyperparams)
+```
+
+#### Iteration - 1
+
+```{r}
+set.seed(4432)
+y_dbscan <- dbscan(air_quality_scaled, eps = 0.25, minPts = 2)
 ```
 
 ```{r}
+table(y_dbscan$cluster)
+```
 
+
+```{r}
+plot(air_quality_wide.df[3:4], main = "DBSCAN plot - 1", col=y_dbscan$cluster)
+```
+
+The first iteration of DBSCAN produced seven clusters. Four clusters have less than ten points in each cluster.  There are two outliers which appear in its own cluster.
+
+
+#### Iteration - 2
+
+```{r}
+set.seed(4432)
+y_dbscan.two <- dbscan(air_quality_scaled, eps = 0.3, minPts = 4)
 ```
 
 ```{r}
-
+table(y_dbscan.two$cluster)
 ```
 
+```{r}
+plot(air_quality_wide.df[3:4], main = "DBSCAN plot - 2", col=y_dbscan.two$cluster)
+```
+
+The second iteration resulted in four clusters in which the two outliers were excluded from the first iteration.  Two of the four clusters have less than ten points in each cluster.
+
+
+
+## Clustering Evaluation
+
+
+### Evaluation of K-Means Clustering model
+
+The Silhouette ratio will be calculated for the K-Means model
+
+
+```{r}
+dist_matrix <- dist(air_quality_scaled)
+```
+
+```{r}
+kmeans.aq.silhouette <- silhouette(y_kmeans, dist_matrix)
+```
+
+```{r}
+summary(kmeans.aq.silhouette)
+```
+
+
+### Evaluation of DBSCAN Clustering model
+
+Calculate the Silhouette ratio for the second iteration of the DBSCAN model
+
+
+```{r}
+dbscan.silhouette <- silhouette(y_dbscan.two$cluster, dist_matrix)
+```
+
+```{r}
+summary(dbscan.silhouette)
+```
+
+
+## Results
+
+- The best Silhouette ratio from the DBSCAN model was 0.66 (for cluster 2). The highest Silhouette ratio from the K-Means model was 0.59 (for cluster 3)
+
+- The DBSCAN model did a better job of clustering by eliminating outliers (noise).
+
+- The DBSCAN model produced four clusters as compared to the five clusters produced by the K-Means model
+
+
+
+## References
+
+
+Hadelin de Ponteves. Machine Learning A-Z: Hands-On Python & R in Data Science. SuperDataScience. Retrieved from https://www.udemy.com/share/101Wci3@NBBFQDfFLzRGxoO4-Ik4lxoYKhdn8weeCIJWoWEjsR1VFIVJ-QLuyIHt7D27dxUnkA==/
+
+
+kNNdistplot: Plot the k-Nearest Neighbor Distance.
+https://www.rdocumentation.org/packages/dbscan/versions/0.9-0/topics/kNNdistplot
 
 
 
