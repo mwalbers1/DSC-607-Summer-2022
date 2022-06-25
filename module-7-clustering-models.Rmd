@@ -235,12 +235,11 @@ clusplot(air_quality_wide.df[1:2],
          labels = 1,
          plotchar = FALSE,
          span = TRUE,
-         main = paste('Air Quality Threats'),
+         main = paste('Air Toxics Concentrations'),
          xlab = 'Average Benzene',
          ylab = 'Average Formaldehyde')
 ```
 
-Visualization of clusters with the "Air Toxics Concentrations - Average Benzene Concentrations" and "Air Toxics Concentrations - Average Formaldehyde Concentrations" features
 
 
 
@@ -253,12 +252,11 @@ clusplot(air_quality_wide.df[3:4],
          labels = 1,
          plotchar = FALSE,
          span = TRUE,
-         main = paste('Air Quality Threats'),
+         main = paste('Boiler Emissions'),
          xlab = 'Boiler Emissions - Total Nox',
          ylab = 'Boiler Emissions - Total PM2.5')
 ```
 
-Visualization of clusters with the "Boiler Emissions- Total NOx Emissions" and "Boiler Emissions- Total PM2.5 Emissions" features
 
 
 ### Calculate proportion of WSS to the Total Sum of Squares
@@ -308,6 +306,8 @@ Run two iterations of DBSCAN with the following hyperparameters:
 print(dbscan.hyperparams)
 ```
 
+
+
 #### Iteration - 1
 
 ```{r}
@@ -325,6 +325,7 @@ plot(air_quality_wide.df[3:4], main = "DBSCAN plot - 1", col=y_dbscan$cluster)
 ```
 
 The first iteration of DBSCAN produced seven clusters. Four clusters have less than ten points in each cluster.  There are two outliers which appear in its own cluster.
+
 
 
 #### Iteration - 2
