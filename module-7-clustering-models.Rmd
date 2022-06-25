@@ -43,7 +43,7 @@ library(skimr)
 library(janitor)
 ```
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
-library(data.table)
+library(cluster)
 ```
 
 
@@ -214,6 +214,66 @@ plot(1:10,
 The optimal number of clusters appears to be five from the scree plot
 
 ```{r}
+set.seed(29)
+kmeans.aq <- kmeans(x = air_quality_scaled, centers = 5)
+y_kmeans = kmeans.aq$cluster
+```
+
+### Visualize clusters
+
+Visualization of clusters with the "Air Toxics Concentrations - Average Benzene Concentrations" and "Air Toxics Concentrations - Average Formaldehyde Concentrations" features
+
+```{r}
+clusplot(air_quality_wide.df[1:2],
+         y_kmeans,
+         lines = 0,
+         shade = TRUE,
+         color = TRUE,
+         labels = 1,
+         plotchar = FALSE,
+         span = TRUE,
+         main = paste('Air Quality Threats'),
+         xlab = 'Average Benzene',
+         ylab = 'Average Formaldehyde')
+```
+
+Visualization of clusters with the "Boiler Emissions- Total NOx Emissions" and "Boiler Emissions- Total PM2.5 Emissions" features
+
+
+```{r}
+clusplot(air_quality_wide.df[3:4],
+         y_kmeans,
+         lines = 0,
+         shade = TRUE,
+         color = TRUE,
+         labels = 1,
+         plotchar = FALSE,
+         span = TRUE,
+         main = paste('Air Quality Threats'),
+         xlab = 'Boiler Emissions - Total Nox',
+         ylab = 'Boiler Emissions - Total PM2.5')
+```
+
+### Calculate proportion of WSS to the Total Sum of Squares
+
+```{r}
+aq.wss.proportion <- kmeans.aq$tot.withinss / kmeans.aq$totss
+
+```
+
+```{r}
+print(aq.wss.proportion)
+```
+
+Both cluster plots are showing outliers and the clusters are overlapping one another. The Total WSS (Within Cluster Sum of Squared distances) accounts for 19% of the total Sum of Squares.  There is one cluster in which its points have high density around its centroid while the remaining clusters have low density around their respective centroids.
+
+
+## DBSCAN Clustering Algorithm
+
+Because there was high density points in the K-Means algorithm, a density-clustering model will be created
+
+
+```{r}
 
 ```
 
@@ -221,6 +281,9 @@ The optimal number of clusters appears to be five from the scree plot
 
 ```
 
+```{r}
+
+```
 
 
 
