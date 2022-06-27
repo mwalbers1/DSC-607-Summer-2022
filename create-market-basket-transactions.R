@@ -1,5 +1,6 @@
 ## Create a synthetic market basket for Apriori algorithm
 
+#library(stringr)
 
 create_market_basket <- function(colname) {
   # Description: Create market basket transactions from ACS data frame. 
@@ -43,7 +44,7 @@ create_market_basket <- function(colname) {
       final.df <- output.df[rep(row.number, row.count),]
       
       # write final.df to csv file
-      write.table(final.df, file="data/acs_market_basket.csv", eol = "\n", quote = FALSE, sep = ",", 
+      write.table(final.df, file="data/market_basket_nyc.csv", eol = "\n", quote = FALSE, sep = ",", 
                   row.names = FALSE, col.names = FALSE, append = TRUE)
   
     }
@@ -51,7 +52,7 @@ create_market_basket <- function(colname) {
 }
 
 # create data frame (for testing)
-acs.df <- read.csv("data/US_Census_ACS_Data.csv")
+acs.df <- read.csv("data/Census_Nyc.csv")
 
 # Create Household.Income_Less50k
 acs.df$Household.Income_Less50k <- acs.df$Household.Income_Less10k + acs.df$Household.Income_10to15k + 
