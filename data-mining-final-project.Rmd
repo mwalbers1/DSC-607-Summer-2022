@@ -242,22 +242,14 @@ ggplot(population_ny_other, aes(x=reorder(County, -Population) , y=Population, f
 
 ## Market Basket Analysis
 
-Conduct market basket analysis in which each transaction in the market basket represents an individual. For example, the transaction for  {Bronx, Coahabiting.household} represents a single cohabiting household living in the Bronx county.
+Conduct market basket analysis in which each transaction in the market basket represents an individual. For example, the transaction for  {Suffolk,Household.Income,Less50k} represents a household earning less than $50,000 dollars per year in Suffolk county.
 
-The first step is to find frequent itemsets for specific risk factors outlined in the research question which include:
-
-- Unemployed
-- Over 65
-- Divorced
-- Separated
-- Living Alone
-- African American race
-- Hispanic race
+The first step is to find frequent itemsets for specific risk factors outlined in the research question. Then association rules will be created from transactions with the highest support.
 
 
 ### Create Market Basket Transactions
 
-Two separate market baskets will be created, one for Nyc and the other for all other counties outside Nyc
+Two separate market baskets will be created, one for Nyc and the other for all other counties outside Nyc. The R Script that creates the market basket CSV files is create-market-basket-transactions.R
 
 
 ```{r}
@@ -278,28 +270,143 @@ ny_other_basket <- read.transactions('data/market_basket_ny_other.csv')
 ```
 
 ```{r}
-inspect(head(ny_other_basket, 10))
+inspect(head(ny_other_basket, 12))
 ```
 
 ```{r}
-inspect(tail(ny_other_basket, 10))
+inspect(tail(ny_other_basket, 12))
 ```
 
 
 ### Apriori Algorithm
 
-#### Find Frequent Itemsets
+**Find Frequent Itemsets**
 
-Find frequent itemsets for both Nyc and Ny-Other baskets containing the risk factors
+
+Find frequent itemsets for both Nyc and Ny-Other baskets containing risk factors
+
+- Unemployed
+- NoHealthInsurance
+- African.American
+- Hispanic
+- Less50k
+- Household.Foodstamp.benefits
+- NoPartner
+- Divorced
+- Widowed
+- Separated
+- LivingAlone
+- With.Disability
+- Over65
+
+
+#### Nyc Frequent Itemsets
 
 
 ```{r}
-
+nyc_support <- apriori(nyc_basket, 
+        parameter = list(target = "frequent", support = 0.0003))
 ```
 
 ```{r}
+summary(nyc_support)
+```
+
+
+```{r}
+nyc_support.df <- DATAFRAME(nyc_support)
+```
+
+```{r}
+nyc_support.df %>% 
+  arrange(desc(support)) %>% 
+  filter(items != '{New}')
+```
+
+```{r}
+nyc_basket.plot <- nyc_basket[!nyc_basket %in% "New"]
+```
+
+
+```{r fig.height=7}
+itemFrequencyPlot(nyc_basket.plot,
+                    main = "NYC Frequent Itemsets",
+                    topN = 20,
+                    col = palette("Pastel 2"),
+                    type = "relative",
+                    horiz = TRUE)
+```
+
+```{r}
+nyc_basket.plot2 <- nyc_basket[!nyc_basket %in% c("New", "Kings,Hispanic", "Queens,Hispanic", "Suffolk,Hispanic", "Bronx,Hispanic", "Nassau,Hispanic", "Kings,African.American", "Bronx,African.American", "Queens,African.American")]
+```
+
+```{r fig.height=5, fig.width=9}
+itemFrequencyPlot(nyc_basket.plot2,
+                    main = "NYC Frequent Itemsets (excl. Hispanic & African American)",
+                    topN = 10,
+                    col = palette("Pastel 1"),
+                    type = "relative",
+                    horiz = TRUE)
+```
+
+#### Nyc Infrequent Itemsets
+
+
+```{r}
+inspect(sort(nyc_support, by='support', decreasing = FALSE)[1:10])
 
 ```
 
+
+#### NY Other Frequent Itemsets
+
+
+
+```{r}
+ny_other_support <- apriori(ny_other_basket, 
+        parameter = list(target = "frequent", support = 0.0003))
+```
+
+
+```{r}
+inspect(sort(ny_other_support, by="support", decreasing = TRUE))
+```
+
+
+```{r}
+ny_other_basket.plot <- ny_other_basket[!ny_other_basket %in% "St."]
+```
+
+
+```{r fig.height=7}
+itemFrequencyPlot(ny_other_basket.plot,
+                    main = "NY Other Frequent Itemsets",
+                    sub = "St. = St. Lawrence",
+                    topN = 20,
+                    col = palette("Pastel 2"),
+                    type = "relative",
+                    horiz = TRUE)
+```
+
+```{r}
+ny_other_basket.plot2 <- ny_other_basket[!ny_other_basket %in% c("St.","Westchester,Hispanic","Erie,Hispanic","Monroe,Hispanic",
+                                                                 "Richmond,Hispanic","Onondaga,Hispanic","Orange,Hispanic",
+                                                                 "Rockland,Hispanic","Albany,Hispanic",
+                                                                 "Dutchess,Hispanic","Oneida,Hispanic",
+                                                                 "Saratoga,Hispanic", "Niagara,Hispanic",
+                                                                 "Broome,Hispanic", "Ulster,Hispanic",
+                                                                 "Rensselaer,Hispanic", "Schenectady,Hispanic",
+                                                                 "Chautauqua,Hispanic")]
+```
+
+```{r fig.height=5, fig.width=9}
+itemFrequencyPlot(ny_other_basket.plot2,
+                    main = "NY Other Frequent Itemsets (excl. Hispanic)",
+                    topN = 10,
+                    col = palette("Pastel 2"),
+                    type = "relative",
+                    horiz = TRUE)
+```
 
 
