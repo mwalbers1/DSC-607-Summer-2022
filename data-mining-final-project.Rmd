@@ -21,6 +21,10 @@ library(skimr)
 library(arules)
 ```
 
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(stringr)
+```
+
 
 ## Project Overview
 
@@ -94,6 +98,12 @@ census <- read.csv('data/US_Census_ACS_Data.csv')
 ```
 
 ```{r}
+# Remove space character from the county column
+census$County <- str_remove(census$County, ' ')
+```
+
+
+```{r}
 skim(census)
 ```
 
@@ -135,12 +145,12 @@ This should also help in avoiding the Simpsons paradox in which association rule
 
 ```{r}
 census_nyc <- census %>% 
-  filter(County %in% c("Kings", "Queens", "New York", "Suffolk", "Bronx", "Nassau"))
+  filter(County %in% c("Kings", "Queens", "NewYork", "Suffolk", "Bronx", "Nassau"))
 ```
 
 ```{r}
 census_ny_other <- census %>% 
-  filter(!County %in% c("Kings", "Queens", "New York", "Suffolk", "Bronx", "Nassau"))
+  filter(!County %in% c("Kings", "Queens", "NewYork", "Suffolk", "Bronx", "Nassau"))
 ```
 
 
@@ -168,14 +178,14 @@ Create two market basket files for NYC and NY Other CSV Census files. A separate
 
 ```{r}
 population_nyc <- population %>% 
-  filter(County %in% c("Kings", "Queens", "New York", "Suffolk", "Bronx", "Nassau")) %>% 
+  filter(County %in% c("Kings", "Queens", "NewYork", "Suffolk", "Bronx", "Nassau")) %>% 
   subset(select = c(County, Total.Population.Male)) %>% 
   mutate(Gender = "Male")
 ```
 
 ```{r}
 population_nyc_f <- population %>% 
-  filter(County %in% c("Kings", "Queens", "New York", "Suffolk", "Bronx", "Nassau")) %>% 
+  filter(County %in% c("Kings", "Queens", "NewYork", "Suffolk", "Bronx", "Nassau")) %>% 
   subset(select = c(County, Total.Population.Female)) %>% 
   mutate(Gender = "Female")
 ```
@@ -208,14 +218,14 @@ ggplot(population_nyc, aes(x=reorder(County, -Population) , y=Population, fill=P
 
 ```{r}
 population_ny_other <- population %>% 
-  filter(!County %in% c("Kings", "Queens", "New York", "Suffolk", "Bronx", "Nassau")) %>% 
+  filter(!County %in% c("Kings", "Queens", "NewYork", "Suffolk", "Bronx", "Nassau")) %>% 
   subset(select = c(County, Total.Population.Male)) %>% 
   mutate(Gender = "Male")
 ```
 
 ```{r}
 population_ny_other_f <- population %>% 
-  filter(!County %in% c("Kings", "Queens", "New York", "Suffolk", "Bronx", "Nassau")) %>% 
+  filter(!County %in% c("Kings", "Queens", "NewYork", "Suffolk", "Bronx", "Nassau")) %>% 
   subset(select = c(County, Total.Population.Female)) %>% 
   mutate(Gender = "Female")
 ```
@@ -280,10 +290,7 @@ inspect(tail(ny_other_basket, 12))
 
 ### Apriori Algorithm
 
-**Find Frequent Itemsets**
-
-
-Find frequent itemsets for both Nyc and Ny-Other baskets containing risk factors
+Discover itemsets for both NYC and NY-Other market baskets for risk factors:
 
 - Unemployed
 - NoHealthInsurance
@@ -300,7 +307,7 @@ Find frequent itemsets for both Nyc and Ny-Other baskets containing risk factors
 - Over65
 
 
-#### Nyc Frequent Itemsets
+#### NYC Frequent Itemsets
 
 
 ```{r}
@@ -313,23 +320,8 @@ summary(nyc_support)
 ```
 
 
-```{r}
-nyc_support.df <- DATAFRAME(nyc_support)
-```
-
-```{r}
-nyc_support.df %>% 
-  arrange(desc(support)) %>% 
-  filter(items != '{New}')
-```
-
-```{r}
-nyc_basket.plot <- nyc_basket[!nyc_basket %in% "New"]
-```
-
-
 ```{r fig.height=7}
-itemFrequencyPlot(nyc_basket.plot,
+itemFrequencyPlot(nyc_basket,
                     main = "NYC Frequent Itemsets",
                     topN = 20,
                     col = palette("Pastel 2"),
@@ -338,7 +330,7 @@ itemFrequencyPlot(nyc_basket.plot,
 ```
 
 ```{r}
-nyc_basket.plot2 <- nyc_basket[!nyc_basket %in% c("New", "Kings,Hispanic", "Queens,Hispanic", "Suffolk,Hispanic", "Bronx,Hispanic", "Nassau,Hispanic", "Kings,African.American", "Bronx,African.American", "Queens,African.American")]
+nyc_basket.plot2 <- nyc_basket[!nyc_basket %in% c("NewYork,Hispanic", "Kings,Hispanic", "Queens,Hispanic", "Suffolk,Hispanic", "Bronx,Hispanic", "Nassau,Hispanic", "Kings,African.American", "Bronx,African.American", "Queens,African.American")]
 ```
 
 ```{r fig.height=5, fig.width=9}
@@ -350,7 +342,7 @@ itemFrequencyPlot(nyc_basket.plot2,
                     horiz = TRUE)
 ```
 
-#### Nyc Infrequent Itemsets
+#### NYC Infrequent Itemsets
 
 
 ```{r}
@@ -359,7 +351,7 @@ inspect(sort(nyc_support, by='support', decreasing = FALSE)[1:10])
 ```
 
 
-#### NY Other Frequent Itemsets
+#### NY Other - Frequent Itemsets
 
 
 
@@ -374,15 +366,10 @@ inspect(sort(ny_other_support, by="support", decreasing = TRUE))
 ```
 
 
-```{r}
-ny_other_basket.plot <- ny_other_basket[!ny_other_basket %in% "St."]
-```
-
 
 ```{r fig.height=7}
-itemFrequencyPlot(ny_other_basket.plot,
+itemFrequencyPlot(ny_other_basket,
                     main = "NY Other Frequent Itemsets",
-                    sub = "St. = St. Lawrence",
                     topN = 20,
                     col = palette("Pastel 2"),
                     type = "relative",
@@ -390,7 +377,7 @@ itemFrequencyPlot(ny_other_basket.plot,
 ```
 
 ```{r}
-ny_other_basket.plot2 <- ny_other_basket[!ny_other_basket %in% c("St.","Westchester,Hispanic","Erie,Hispanic","Monroe,Hispanic",
+ny_other_basket.plot2 <- ny_other_basket[!ny_other_basket %in% c("Westchester,Hispanic","Erie,Hispanic","Monroe,Hispanic",
                                                                  "Richmond,Hispanic","Onondaga,Hispanic","Orange,Hispanic",
                                                                  "Rockland,Hispanic","Albany,Hispanic",
                                                                  "Dutchess,Hispanic","Oneida,Hispanic",
@@ -408,5 +395,34 @@ itemFrequencyPlot(ny_other_basket.plot2,
                     type = "relative",
                     horiz = TRUE)
 ```
+
+#### NY Other - Infrequent Itemsets
+
+
+```{r}
+inspect(sort(ny_other_support, by="support", decreasing = FALSE)[1:10])
+```
+
+### Identify Association Rules
+
+Discover association rules for the NYC and NY-Other market baskets
+
+
+#### NYC Association Rules
+
+
+```{r}
+nyc_rules <- apriori(nyc_basket, parameter = list(support = 0.0003, confidence = 0.1))
+```
+
+```{r}
+inspect(nyc_rules)
+```
+
+```{r}
+
+```
+
+
 
 
