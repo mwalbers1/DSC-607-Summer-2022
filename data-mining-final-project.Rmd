@@ -168,7 +168,7 @@ write_csv(census_ny_other, 'data/Census_Ny_Other.csv')
 
 ## Create Market Basket files 
 
-Create two market basket files for NYC and NY Other CSV Census files. A separate R script is executed on each of these files to create the Market Basket files.
+Create two market basket files for NYC and NY Other CSV Census files. Call create-market-basket-transactions.R to create the Market Basket files.
 
 
 ## Data Visualizations for NYC and NY Other
@@ -330,7 +330,7 @@ itemFrequencyPlot(nyc_basket,
 ```
 
 ```{r}
-nyc_basket.plot2 <- nyc_basket[!nyc_basket %in% c("NewYork,Hispanic", "Kings,Hispanic", "Queens,Hispanic", "Suffolk,Hispanic", "Bronx,Hispanic", "Nassau,Hispanic", "Kings,African.American", "Bronx,African.American", "Queens,African.American")]
+nyc_basket.plot2 <- nyc_basket[!nyc_basket %in% c("NewYork,Hispanic", "Kings,Hispanic", "Queens,Hispanic", "Suffolk,Hispanic", "Bronx,Hispanic", "Nassau,Hispanic", "Kings,African.American", "Bronx,African.American", "Queens,African.American", "NewYork,African.American", "Suffolk,African.American")]
 ```
 
 ```{r fig.height=5, fig.width=9}
@@ -412,17 +412,105 @@ Discover association rules for the NYC and NY-Other market baskets
 
 
 ```{r}
-nyc_rules <- apriori(nyc_basket, parameter = list(support = 0.0003, confidence = 0.1))
+nyc_rules <- apriori(nyc_basket, parameter = list(support = 0.0003, 
+                                                  confidence = 0.01,
+                                                  minlen = 1))
 ```
 
 ```{r}
 inspect(nyc_rules)
 ```
 
+### Find rules for a consequent of Unemployed
+
+```{r}
+rules_Unemployed_rhs = apriori(nyc_basket,
+            parameter = list(support = 0.0003, conf = 0.001),
+            appearance = list(rhs=c("Unemployed"))
+          )
+```
+
+No rules were found for NYC counties with Unemployed as a consequent
+
+
+```{r}
+rules_Unemployed_rhs.2 = apriori(ny_other_basket,
+            parameter = list(supp=0.0003, conf=0.001),
+            appearance = list(rhs="Unemployed", default = "lhs"))
+```
+
+No rules were found for NY Other with Unemployed as a consequent
+
+
+## Hypothesis Testing
+
+Run Chi-Square Goodness of Fit tests on frequent and infrequent Itemsets
+
+
+```{r}
+chi_square.function <- function(source.df) {
+  # Chi-square goodness of fit test
+  #
+  # args: source.df: source data frame
+  #
+  
+  tbl_1 <- table(source.df$category_1)
+  print(chisq.test(tbl_1))
+  
+  tbl_2 <- table(source.df$category_2)
+  print(chisq.test(tbl_2))
+  
+  tbl_3 <- table(source.df$category_3)
+  print(chisq.test(tbl_3))
+}
+
+```
+
+
+### NYC Frequent Itemsets
+
+
+```{r}
+input_file.nyc <- 'data/market_basket_nyc.csv'
+
+ncol <- max(count.fields(input_file.nyc, sep = ","))
+
+new_df.nyc <- read.csv(input_file.nyc, 
+                   fill = TRUE, 
+                   header = FALSE, 
+                   col.names = paste0("V", seq_len(ncol)))
+
+colnames(new_df.nyc) <- c("county", "category_1", "category_2", "category_3")
+```
+
 ```{r}
 
 ```
 
 
+```{r}
+kings.df <- new_df.nyc %>% 
+  filter(county == 'Kings')   
+  
+chi_square.function(kings.df)
+```
+
+```{r}
+newyork.df <- new_df.nyc %>% 
+  filter(county == 'NewYork')   
+  
+chi_square.function(newyork.df)
+```
+
+```{r}
+queens.df <- new_df.nyc %>% 
+  filter(county == 'Queens')   
+  
+chi_square.function(queens.df)
+```
+
+```{r}
+
+```
 
 
