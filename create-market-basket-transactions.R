@@ -1,6 +1,6 @@
 ## Create a synthetic market basket for Apriori algorithm
 
-#library(stringr)
+library(stringr)
 
 create_market_basket <- function(source.df, colname, filename) {
   # Description: Create market basket transactions from ACS data frame. 
@@ -144,9 +144,9 @@ market_basket.filename <- "data/market_basket_ny_other.csv"
 market_basket_wrapper(census.filename, market_basket.filename)
 
 # Create Market basket file for NYC
-# census.filename.nyc <- "data/Census_Nyc.csv"
-# market_basket.nyc.filename <- "data/market_basket_nyc.csv"
-# market_basket_wrapper(census.filename.nyc, market_basket.nyc.filename)
+census.filename.nyc <- "data/Census_Nyc.csv"
+market_basket.nyc.filename <- "data/market_basket_nyc.csv"
+market_basket_wrapper(census.filename.nyc, market_basket.nyc.filename)
 
 
 
