@@ -1,7 +1,7 @@
 ---
 title: 'DSC-607 Data Mining: Final Project'
 author: "Michael Albers"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -36,17 +36,29 @@ Perform Market Basket Analysis on US Census data to extract patterns and associa
 
 Identify specific patterns and segments of the New York state population for post COVID-19 risk factors such as job loss, stress, anxiety, and depression. The risk factors are:
 
+
 1 - Unemployed
+
 2 - Household income less than $50,000 dollars per year
+
 3 - Living Alone
+
 4 - No Partner
+
 5 - Living with Disability
+
 6 - No Health Insurance
+
 7 - Divorced
+
 8 - Widowed
+
 9 - Separated
+
 10 - Over 65
+
 11 - Number of African American individuals per County
+
 12 - Number of Hispanic individuals per County
 
 
@@ -137,8 +149,6 @@ ggplot(population, aes(x=reorder(County, -Total.Population), y=Total.Population,
 
 The census data is skewed to the right where a few counties have over 1 million residents. Because association analysis does not perform well with skewed data, the data set will be partitioned into two data frames. One data frame will be for NYC counties and the remaining counties with a population less than 1 Million individuals will be in another data frame.
 
-This should also help in avoiding the Simpsons paradox in which association rules for the aggregate of counties differ from when the data is stratified.
-
 
 ## Partition US Census data set into two separate data frames
 
@@ -168,7 +178,7 @@ write_csv(census_ny_other, 'data/Census_Ny_Other.csv')
 
 ## Create Market Basket files 
 
-Create two market basket files for NYC and NY Other CSV Census files. Call create-market-basket-transactions.R to create the Market Basket files.
+Create two market basket files for NYC and NY Other CSV Census files. Call **create-market-basket-transactions.R** to create the Market Basket files.
 
 
 ## Data Visualizations for NYC and NY Other
@@ -403,43 +413,6 @@ itemFrequencyPlot(ny_other_basket.plot2,
 inspect(sort(ny_other_support, by="support", decreasing = FALSE)[1:10])
 ```
 
-### Identify Association Rules
-
-Discover association rules for the NYC and NY-Other market baskets
-
-
-#### NYC Association Rules
-
-
-```{r}
-nyc_rules <- apriori(nyc_basket, parameter = list(support = 0.0003, 
-                                                  confidence = 0.01,
-                                                  minlen = 1))
-```
-
-```{r}
-inspect(nyc_rules)
-```
-
-### Find rules for a consequent of Unemployed
-
-```{r}
-rules_Unemployed_rhs = apriori(nyc_basket,
-            parameter = list(support = 0.0003, conf = 0.001),
-            appearance = list(rhs=c("Unemployed"))
-          )
-```
-
-No rules were found for NYC counties with Unemployed as a consequent
-
-
-```{r}
-rules_Unemployed_rhs.2 = apriori(ny_other_basket,
-            parameter = list(supp=0.0003, conf=0.001),
-            appearance = list(rhs="Unemployed", default = "lhs"))
-```
-
-No rules were found for NY Other with Unemployed as a consequent
 
 
 ## Hypothesis Testing
@@ -466,10 +439,6 @@ chi_square.function <- function(source.df) {
 
 ```
 
-
-### NYC Frequent Itemsets
-
-
 ```{r}
 input_file.nyc <- 'data/market_basket_nyc.csv'
 
@@ -484,12 +453,21 @@ colnames(new_df.nyc) <- c("county", "category_1", "category_2", "category_3")
 ```
 
 ```{r}
+glimpse(new_df.nyc)
+```
+
+
+```{r}
 input_file.ny_other <- 'data/market_basket_ny_other.csv'
 
 ncol.2 <- max(count.fields(input_file.ny_other, sep = ","))
 
 new_df.ny_other <- read.csv(input_file.ny_other, fill = TRUE, header = FALSE, col.names = paste0("V", seq_len(ncol.2)))
 colnames(new_df.ny_other) <- c("county", "category_1", "category_2", "category_3")
+```
+
+```{r}
+glimpse(new_df.ny_other)
 ```
 
 
