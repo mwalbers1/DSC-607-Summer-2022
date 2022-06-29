@@ -447,7 +447,7 @@ No rules were found for NY Other with Unemployed as a consequent
 Run Chi-Square Goodness of Fit tests on frequent and infrequent Itemsets
 
 
-```{r}
+```{r "chi_square function"}
 chi_square.function <- function(source.df) {
   # Chi-square goodness of fit test
   #
@@ -484,7 +484,12 @@ colnames(new_df.nyc) <- c("county", "category_1", "category_2", "category_3")
 ```
 
 ```{r}
+input_file.ny_other <- 'data/market_basket_ny_other.csv'
 
+ncol.2 <- max(count.fields(input_file.ny_other, sep = ","))
+
+new_df.ny_other <- read.csv(input_file.ny_other, fill = TRUE, header = FALSE, col.names = paste0("V", seq_len(ncol.2)))
+colnames(new_df.ny_other) <- c("county", "category_1", "category_2", "category_3")
 ```
 
 
@@ -510,7 +515,66 @@ chi_square.function(queens.df)
 ```
 
 ```{r}
+erie.df <- new_df.ny_other %>% 
+  filter(county == 'Erie')
 
+chi_square.function(erie.df)
+```
+
+```{r}
+westchester.df <- new_df.ny_other %>% 
+  filter(county == 'Westchester')
+
+chi_square.function(westchester.df)
+```
+
+```{r}
+bronx.df <- new_df.nyc %>% 
+  filter(county == 'Bronx')   
+  
+chi_square.function(bronx.df)
+```
+
+```{r}
+nassau.df <- new_df.nyc %>% 
+  filter(county == 'Nassau')   
+  
+chi_square.function(nassau.df)
+```
+
+```{r}
+albany.df <- new_df.ny_other %>% 
+  filter(county == 'Albany')
+
+chi_square.function(albany.df)
+```
+
+```{r}
+cattaraugus.df <- new_df.ny_other %>% 
+  filter(county == 'Cattaraugus')
+
+chi_square.function(cattaraugus.df)
+```
+
+```{r}
+oswego.df <- new_df.ny_other %>% 
+  filter(county == 'Oswego')
+
+chi_square.function(oswego.df)
+```
+
+```{r}
+richmond.df <- new_df.ny_other %>% 
+  filter(county == 'Richmond')
+
+chi_square.function(richmond.df)
+```
+
+```{r}
+stlawrence.df <- new_df.ny_other %>% 
+  filter(county == 'St.Lawrence')
+
+chi_square.function(stlawrence.df)
 ```
 
 
